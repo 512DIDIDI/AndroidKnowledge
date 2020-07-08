@@ -227,7 +227,7 @@
          mViews.add(view);
          //保存viewRootImpl对象
          mRoots.add(root);
-         //保存decorView的params
+         //保存decorView的layout params
          mParams.add(wparams);
          try {
              //绑定ViewRootImpl与DecorView
@@ -238,11 +238,21 @@
 
 5. **`ViewRoot`(实际实现类是`android.view.ViewRootImpl`)**
 
-   * 作用：连接`DecorView`与`WindowManagerService`，完成`View`的三大绘制流程。
+   * 作用：将`DecorView`添加到`Window`中，连接`DecorView`与`WindowManagerService`，完成`View`的三大绘制流程。
+
+   * 注意：因为`DecorView`与`ViewRootImpl`的绑定是在`Activity.onResume()`之后，所以`View`的三大流程都是在`Activity.onResume`之后。
 
    * 相关源码：
 
      ```java
+     android/view/ViewRootImpl.java
+     final IWindowSession mWindowSession;
+     
+     public ViewRootImpl(Context context, Display display) {
+         //WindowManagerGlobal获取IWindowSession
+         mWindowSession = WindowManagerGlobal.getWindowSession();
+     }
+     
      public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) {
          synchronized (this) {
              if (mView == null) {
@@ -252,7 +262,7 @@
                  //view的三大绘制流程
                  requestLayout();
                  try{
-                     //与WMS通信
+                     //与WMS通信，创建窗口并添加显示
                      res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
             				 	getHostVisibility(), mDisplay.getDisplayId(), mTmpFrame,
              				mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
@@ -263,18 +273,111 @@
          }
      }
      ```
-     
+
      ```java
-     private void performTraversals() {
-         ... ...
-         //完成mView的measure流程
-         performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
-         //完成mView的layout流程
-         performLayout(lp, mWidth, mHeight);
-         //完成mView的draw流程
-         performDraw();
+     android/view/ViewRootImpl.java
+     public void requestLayout() {
+         if (!mHandlingLayoutInLayoutRequest) {
+             checkThread();
+             mLayoutRequested = true;
+             //这里执行view的绘制流程
+             scheduleTraversals();
+         }
+     }
+     
+     final class TraversalRunnable implements Runnable {
+     	@Override
+     	public void run() {
+     		doTraversal();
+     	}
+     }
+     
+     final TraversalRunnable mTraversalRunnable = new TraversalRunnable();
+     
+     void scheduleTraversals() {
+     	if (!mTraversalScheduled) {
+             ... ...
+     		mChoreographer.postCallback(
+     			Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+             ... ...
+     	}
+     }
+     
+     void doTraversal() {
+     	if (mTraversalScheduled) {
+     		... ...
+     		performTraversals();
+             ... ...
+     	}
      }
      ```
+
+     ```java
+     android/view/ViewRootImpl.java
+     private void performTraversals() {
+         ... ...
+         //measure流程
+         performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
+         //layout流程
+         performLayout(lp, mWidth, mHeight);
+         //draw流程
+         performDraw();
+     }
+     
+     private void performMeasure(int childWidthMeasureSpec, int childHeightMeasureSpec) {
+     	try {
+             //执行DecorView的mesaure流程
+     		mView.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+     	} finally {
+     		Trace.traceEnd(Trace.TRACE_TAG_VIEW);
+     	}
+     }
+     
+     private void performLayout(WindowManager.LayoutParams lp, int desiredWindowWidth,
+                 int desiredWindowHeight) {
+         final View host = mView;
+         try {
+             //执行DecorView的layout流程
+     		host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
+         }
+     }
+     
+     private void performDraw() {
+         ... ...
+         try {
+     		boolean canUseAsync = draw(fullRedrawNeeded);
+         }
+         ... ...
+     }
+     
+     private boolean draw(boolean fullRedrawNeeded) {
+         ... ...
+         if (!drawSoftware(surface, mAttachInfo, xOffset, yOffset,
+             scalingRequired, dirty, surfaceInsets)) {
+         	return false;
+     	}
+         ... ...
+     }
+     
+     private boolean drawSoftware(Surface surface, AttachInfo attachInfo, int xoff, int yoff,
+             boolean scalingRequired, Rect dirty, Rect surfaceInsets) {
+         ... ...
+         //执行DecorView的draw流程
+         mView.draw(canvas);
+         ... ...
+     }
+     ```
+
+6. **综上**
+
+   1. 创建`DecorView`的流程：
+      * `Activity`在`attach`时，会创建`PhoneWindow`实例`mWindow`;
+      * `Activity`在`onCreate`中调用`setContentView`方法时，会间接调用`mWindow.setContentView`;
+      * `PhoneWindow`在`setContentView`中会创建`DecorView`的实例，并将`Activity`传入的布局加载到`DecorView`中`id`为`content`的`mContentParent`中;
+      * `DecorView`是android视图树的根节点，最底层的`View`，在`PhoneWindow`创建布局时`generateLayout`会根据不同类型的主题创建布局，其中会有一个`id`为`content`的`ViewGroup`，`Activity`中传入的布局文件就是以`content`为父布局;
+   2.  建立`DecorView`与`WindowManagerService`的联系并最终绘制显示的流程：
+      * `ActivityThread`在调用`handleResumeActivity`，会执行`Activity`的`onResume`方法，随后，会创建`ViewRootImpl`的实例，获取`Activity`的`Window`实例，并获取`Window`中的`DecorView`实例，使用`WindowManager`，将`ViewRootImpl`与`DecorView`绑定;
+      * `ViewRootImpl`获取到`DecorView`的实例后，会持有该引用，并分步调用`mView`的`measure`,`layout`,`draw`方法。
 
 
 
