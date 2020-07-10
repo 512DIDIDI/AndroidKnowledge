@@ -33,7 +33,7 @@
 
 2. **`Window`**
 
-   * 作用：唯一实现类`PhoneWindow`，创建了顶层视图`DecorView`作为父布局用来加载`Activity`中`setContentView()`方法传入的`layoutRes`。是为了管理ui排版，视图控制而诞生的。
+   * 作用：唯一实现类`PhoneWindow`，创建了顶层视图`DecorView`，`DecorView`作为父布局用来加载`Activity`中`setContentView()`方法传入的`layoutRes`。是为了管理ui排版，视图控制而诞生的。
 
    * 相关源码：
 
