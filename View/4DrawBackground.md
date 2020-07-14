@@ -30,7 +30,28 @@
 
 2. **`Canvas`**
 
-3. **`Paint`**
+   * 定义：`Canvas`，是一种绘制时的规则，是`Android`2D图形绘制的基础。
+
+   * 作用：规定绘制内容时的规则 & 内容，绘制内容是根据`Canvas`的规则绘制在屏幕上的，`Canvas`只是绘制时的规则，实际内容是绘制在屏幕上的。
+
+   * 其他：
+
+     * 当调用`Canvas.save()`/`Canvas.restore()`会进行图层以及画布状态的出入栈。
+
+     ![状态栈](https://imgconvert.csdnimg.cn/aHR0cDovL3VwbG9hZC1pbWFnZXMuamlhbnNodS5pby91cGxvYWRfaW1hZ2VzLzk0NDM2NS05NGMxMGYwNzMxOTExYmVhLnBuZz9pbWFnZU1vZ3IyL2F1dG8tb3JpZW50L3N0cmlwJTdDaW1hZ2VWaWV3Mi8yL3cvMTI0MA)
+
+     * `Canvas`是由多个图层构成的
+
+       > 1. 在画布上操作 = 在图层上操作
+       > 2. 如无设置，绘制操作和画布操作是默认在默认图层上进行
+       > 3. 在通常情况下，使用默认图层就可满足需求；若需要绘制复杂的内容（如地图），则需使用更多的图层
+       > 4. 最终显示的结果 = 所有图层叠在一起的效果
+
+     ![画布构成 - 图层](https://imgconvert.csdnimg.cn/aHR0cDovL3VwbG9hZC1pbWFnZXMuamlhbnNodS5pby91cGxvYWRfaW1hZ2VzLzk0NDM2NS05YWFjOTYxOTBiYzBhNTMzLnBuZz9pbWFnZU1vZ3IyL2F1dG8tb3JpZW50L3N0cmlwJTdDaW1hZ2VWaWV3Mi8yL3cvMTI0MA)
+
+3. **`Drawable`**
+
+   
 
 4. **其他要点**
 
