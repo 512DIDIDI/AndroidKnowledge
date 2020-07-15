@@ -35,7 +35,7 @@
              dispatchDraw(canvas);
              //第四步：绘制前景(滑动条 前景等)
              onDrawForeground(canvas);
-             //第四步：绘制焦点高亮处
+             //第五步：绘制焦点高亮处
              drawDefaultFocusHighlight(canvas);
              return;
          }
@@ -150,7 +150,11 @@
 
 7. **简要流程**
 
-   
+   ![draw主体流程](draw.jpg)
+
+   ![viewGroup与view层级间的draw流程](drawViewGroup.jpg)
 
 8. **其他要点**
+
+   * `View.setWillNotDraw(boolean willNotDraw)`：如果这个`View`不需要绘制自身，即`onDraw`方法，则可以设置为`true`，某一些`ViewGroup`会设置为`true`以进行优化绘制。
 

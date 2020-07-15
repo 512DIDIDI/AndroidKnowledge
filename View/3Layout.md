@@ -126,8 +126,6 @@
      }
      ```
 
-     
-
 7. **例子**
 
    * 以`LinearLayout`来举例`onLayout`在`ViewGroup`中是如何实现的
@@ -168,5 +166,5 @@
 
 9. **其他要点**
 
-   * `getWidth/getHeight`是在`setFrame()`中得到的，也就是在`layout`流程后才能获取到，也是`View`的最终宽高。
+   * `getWidth/getHeight`是在`setFrame()`之后得到的，也是`View`的最终宽高，子类在重写`onLayout`时，`super.onLayout()`之后已经能通过`getWidth`/`getHeight`获取到最终宽高。
    * `layout`流程中，用到的`left`，`top`，`right`，`bottom`都是相对于父`View`的位置，不是坐标系的绝对位置。
