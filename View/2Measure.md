@@ -214,5 +214,13 @@
 
       ![示意图](https://imgconvert.csdnimg.cn/aHR0cHM6Ly91cGxvYWQtaW1hZ2VzLmppYW5zaHUuaW8vdXBsb2FkX2ltYWdlcy85NDQzNjUtMzNkYjdiOWFhM2FkNWMzMi5wbmc)
 
-    
+11. **系列文章**
+
+    1. [View的背景知识](1KnowledgeBackground.md)
+    2. [View的测量流程](2Measure.md)
+    3. [View的布局流程](3Layout.md)
+    4. [View的绘制背景知识](4DrawBackground.md)
+    5. [View的绘制流程](5Draw.md)
+    6. [View的三大绘制流程总结](6Conclusion.md)
+    7. [View的事件分发机制](7Event.md)
 

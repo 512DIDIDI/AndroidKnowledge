@@ -238,9 +238,13 @@
 
 5. **`ViewRoot`(实际实现类是`android.view.ViewRootImpl`)**
 
-   * 作用：将`DecorView`添加到`Window`中，连接`DecorView`与`WindowManagerService`，完成`View`的三大绘制流程。
+   * 作用
 
-   * 注意：因为`DecorView`与`ViewRootImpl`的绑定是在`Activity.onResume()`之后，所以`View`的三大流程都是在`Activity.onResume`之后。
+     1. 连接`DecorView`与`WindowManager`，也可以说是`Window`与`DecorView`的纽带
+     2. 通过`DecorView`完成`View`的三大流程绘制
+     3. 用责任链模式，向`DecorView`分发用户的`InputEvent`事件
+
+   * 注意：在`Activity.onResume()`之后，`ViewRootImpl.setView`中将`DecorView`传入，并在之后执行`requestLayout()`通过`DecorView`递归执行`View`的三大流程，所以`View`的三大流程都是在`Activity.onResume`之后。
 
    * 相关源码：
 
@@ -261,19 +265,39 @@
                  ... ...
                  //view的三大绘制流程
                  requestLayout();
-                 try{
-                     //与WMS通信，创建窗口并添加显示
-                     res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
+                 //创建InputChannel
+                 mInputChannel = new InputChannel();
+                 //wms根据当前的window创建了SocketPair用于跨进程通信，并对传入的mInputChannel进行了注册
+                 //此后ViewRootImpl中的mInputChannel就指向了正确的InputChannel
+                 //client端与server端就能进行双向通信了
+                 res = mWindowSession.addToDisplay(mWindow, mSeq, mWindowAttributes,
             				 	getHostVisibility(), mDisplay.getDisplayId(), mTmpFrame,
              				mAttachInfo.mContentInsets, mAttachInfo.mStableInsets,
              				mAttachInfo.mOutsets, mAttachInfo.mDisplayCutout, mInputChannel,
              				mTempInsets);
-                 }
+                 //创建WindowInputEventReceiver，处理事件分发
+                 mInputEventReceiver = new WindowInputEventReceiver(mInputChannel,
+                               Looper.myLooper());
+                 //组装InputStage责任链
+                 mSyntheticInputStage = new SyntheticInputStage();
+                 InputStage viewPostImeStage = new ViewPostImeInputStage(mSyntheticInputStage);
+                 InputStage nativePostImeStage = new NativePostImeInputStage(viewPostImeStage,
+                             "aq:native-post-ime:" + counterSuffix);
+                 InputStage earlyPostImeStage = new EarlyPostImeInputStage(nativePostImeStage);
+                 InputStage imeStage = new ImeInputStage(earlyPostImeStage,
+                             "aq:ime:" + counterSuffix);
+                 InputStage viewPreImeStage = new ViewPreImeInputStage(imeStage);
+                 InputStage nativePreImeStage = new NativePreImeInputStage(viewPreImeStage,
+                             "aq:native-pre-ime:" + counterSuffix);
+                 mFirstInputStage = nativePreImeStage;
+                 mFirstPostImeInputStage = earlyPostImeStage;
              }
          }
      }
      ```
-
+     
+     * `View`的三大绘制流程入口
+     
      ```java
      android/view/ViewRootImpl.java
      public void requestLayout() {
@@ -291,7 +315,7 @@
      		doTraversal();
      	}
      }
-     
+
      final TraversalRunnable mTraversalRunnable = new TraversalRunnable();
      
      void scheduleTraversals() {
@@ -310,10 +334,7 @@
              ... ...
      	}
      }
-     ```
-
-     ```java
-     android/view/ViewRootImpl.java
+     
      private void performTraversals() {
          ... ...
          //measure流程
@@ -367,6 +388,7 @@
          ... ...
      }
      ```
+     
 
 6. **综上**
 
@@ -375,9 +397,23 @@
       * `Activity`在`onCreate`中调用`setContentView`方法时，会间接调用`mWindow.setContentView`;
       * `PhoneWindow`在`setContentView`中会创建`DecorView`的实例，并将`Activity`传入的布局加载到`DecorView`中`id`为`content`的`mContentParent`中;
       * `DecorView`是android视图树的根节点，最底层的`View`，在`PhoneWindow`创建布局时`generateLayout`会根据不同类型的主题创建布局，其中会有一个`id`为`content`的`ViewGroup`，`Activity`中传入的布局文件就是以`content`为父布局;
-   2.  建立`DecorView`与`WindowManagerService`的联系并最终绘制显示的流程：
+   2.  建立`DecorView`与`WindowManager`的联系并最终绘制显示的流程：
       * `ActivityThread`在调用`handleResumeActivity`，会执行`Activity`的`onResume`方法，随后，会创建`ViewRootImpl`的实例，获取`Activity`的`Window`实例，并获取`Window`中的`DecorView`实例，使用`WindowManager`，将`ViewRootImpl`与`DecorView`绑定;
       * `ViewRootImpl`获取到`DecorView`的实例后，会持有该引用，并分步调用`mView`的`measure`,`layout`,`draw`方法。
+   3. 通过责任链模式，向`DecorView`分发用户的`InputEvent`事件(具体细节查看[View的事件分发机制](7Event.md))
+      * 创建`InputChannel`，并通过`Binder`在`SystemServer`进程中完成`InputChannel`的注册。
+      * 创建`WindowInputEventReceiver`来处理事件分发。
+      * 组装`InputStage`责任链，负责不同`InputEvent`事件的处理。
+   
+7. **系列文章**
+
+   1. [View的背景知识](1KnowledgeBackground.md)
+   2. [View的测量流程](2Measure.md)
+   3. [View的布局流程](3Layout.md)
+   4. [View的绘制背景知识](4DrawBackground.md)
+   5. [View的绘制流程](5Draw.md)
+   6. [View的三大绘制流程总结](6Conclusion.md)
+   7. [View的事件分发机制](7Event.md)
 
 
 

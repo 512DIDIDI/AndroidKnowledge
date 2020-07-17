@@ -87,3 +87,13 @@
 
 5. [绘制图形基础以及各api使用](https://github.com/512DIDIDI/ViewDemo)
 
+6. **系列文章**
+
+   1. [View的背景知识](1KnowledgeBackground.md)
+   2. [View的测量流程](2Measure.md)
+   3. [View的布局流程](3Layout.md)
+   4. [View的绘制背景知识](4DrawBackground.md)
+   5. [View的绘制流程](5Draw.md)
+   6. [View的三大绘制流程总结](6Conclusion.md)
+   7. [View的事件分发机制](7Event.md)
+

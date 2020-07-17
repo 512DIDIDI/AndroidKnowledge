@@ -2,7 +2,7 @@
 
 1. **主要思路**
 
-   **ViewGroup的遍历**（从`DecorView`开始遍历子`View`，执行`layout`）
+   **ViewGroup的遍历子节点，通过setFrame存储位置信息**
 
 2. **主体函数**
 
@@ -168,3 +168,13 @@
 
    * `getWidth/getHeight`是在`setFrame()`之后得到的，也是`View`的最终宽高，子类在重写`onLayout`时，`super.onLayout()`之后已经能通过`getWidth`/`getHeight`获取到最终宽高。
    * `layout`流程中，用到的`left`，`top`，`right`，`bottom`都是相对于父`View`的位置，不是坐标系的绝对位置。
+   
+10. **系列文章**
+
+    1. [View的背景知识](1KnowledgeBackground.md)
+    2. [View的测量流程](2Measure.md)
+    3. [View的布局流程](3Layout.md)
+    4. [View的绘制背景知识](4DrawBackground.md)
+    5. [View的绘制流程](5Draw.md)
+    6. [View的三大绘制流程总结](6Conclusion.md)
+    7. [View的事件分发机制](7Event.md)
