@@ -400,12 +400,19 @@
    2.  建立`DecorView`与`WindowManager`的联系并最终绘制显示的流程：
       * `ActivityThread`在调用`handleResumeActivity`，会执行`Activity`的`onResume`方法，随后，会创建`ViewRootImpl`的实例，获取`Activity`的`Window`实例，并获取`Window`中的`DecorView`实例，使用`WindowManager`，将`ViewRootImpl`与`DecorView`绑定;
       * `ViewRootImpl`获取到`DecorView`的实例后，会持有该引用，并分步调用`mView`的`measure`,`layout`,`draw`方法。
-   3. 通过责任链模式，向`DecorView`分发用户的`InputEvent`事件(具体细节查看[View的事件分发机制](7Event.md))
+   3. 当`InputManager`监控到硬件层面的输入事件时，会通知`ViewRootImpl`对输入事件进行底层分发(具体细节查看[View的事件分发机制](7Event.md))
       * 创建`InputChannel`，并通过`Binder`在`SystemServer`进程中完成`InputChannel`的注册。
       * 创建`WindowInputEventReceiver`来处理事件分发。
       * 组装`InputStage`责任链，负责不同`InputEvent`事件的处理。
    
-7. **系列文章**
+7. **其他要点**
+
+   ![](location.jpg)
+
+   * `View` ---`getLeft()` `getTop()` `getRight()` `getBottom()`返回的是`View` 相对与`ViewGroup`的左上右下距离
+   * `MotionEvent`---`getRawX()` `getRawY()`返回的是触摸点相对于屏幕的`x/y`距离 `getX()` `getY()`返回的是触摸点相对于自身控件的`x/y`距离
+
+8. **系列文章**
 
    1. [View的背景知识](1KnowledgeBackground.md)
    2. [View的测量流程](2Measure.md)
