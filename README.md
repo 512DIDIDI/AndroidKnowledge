@@ -8,7 +8,8 @@
    * [view的绘制流程](/View/5Draw.md)
    * [view的绘制流程总结](/View/6Conclusion.md)
    * [view的事件分发机制](/View/7Event.md)
-2. **设计模式**
+2. [Kotlin](https://github.com/512DIDIDI/KotlinDemo)
+3. **设计模式**
    * [单例模式](/DesignPattern/singleton.md)
    * [工厂模式](/DesignPattern/factory.md)
-3. 
+4. 
